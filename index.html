@@ -619,7 +619,7 @@ const QUESTIONS = [
     c: 0
   },
   {
-    q: "Что её сразу улучшает настроение?",
+    q: "Что сразу улучшит ее настроение ?",
     a: ["Любимая музыка 🎵", "Вкусная еда 🍰", "Пополнение на карту 🤑", "Шопинг 🛍️"],
     c: 2
   },
@@ -685,6 +685,7 @@ function show(id) {
 
 function startGame() {
   resetState();
+  preloadPhotos();
   show('screen-game');
   loadQuestion();
 }
@@ -724,6 +725,13 @@ function updateTimerBar() {
   const bar = $('timer-bar');
   bar.style.width = pct + '%';
   bar.classList.toggle('danger', timeLeft <= 5);
+}
+
+function preloadPhotos() {
+  Object.values(PHOTOS).forEach(src => {
+    const img = new Image();
+    img.src = src;
+  });
 }
 
 function loadQuestion() {
@@ -916,6 +924,7 @@ function createParticles() {
 }
 
 createParticles();
+preloadPhotos();
 </script>
 </body>
 </html>
