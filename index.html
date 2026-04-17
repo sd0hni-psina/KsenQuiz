@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>День Рождения Квиз 🎉</title>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --pink: #ff4d8d;
+      --purple: #8b2fc9;
+      --gold: #ffcc00;
+      --dark: #0d0014;
+      --card-bg: rgba(255,255,255,0.05);
+      --card-border: rgba(255,255,255,0.12);
+      --correct: #00e676;
+      --wrong: #ff4444;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--dark);
+      font-family: 'Nunito', sans-serif;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    body {
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(139,47,201,0.4) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 100%, rgba(255,77,141,0.35) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(255,204,0,0.06) 0%, transparent 60%),
+        #0d0014;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+  
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      animation: float linear infinite;
+      opacity: 0;
+    }
+    @keyframes float {
+      0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.4; }
+      100% { transform: translateY(-20px) rotate(360deg); opacity: 0; }
+    }
+
+    #root {
+      position: relative;
+      z-index: 1;
+      width: min(100%, 520px);
+    }
+
+  
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+
+    #screen-welcome {
+      text-align: center;
+      animation: fadeUp 0.6s ease;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .welcome-emoji {
+      font-size: 72px;
+      display: block;
+      margin-bottom: 16px;
+      animation: bounce 2s ease infinite;
+    }
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .welcome-title {
+      font-family: 'Unbounded', sans-serif;
+      font-size: clamp(22px, 6vw, 34px);
+      font-weight: 900;
+      line-height: 1.2;
+      background: linear-gradient(135deg, #fff 0%, #ff9de2 50%, var(--gold) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+
+    .welcome-sub {
+      font-size: 15px;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 36px;
+      line-height: 1.6;
+    }
+
+    .welcome-rules {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 20px 24px;
+      margin-bottom: 32px;
+      text-align: left;
+    }
+    .rule-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      font-size: 14px;
+      color: rgba(255,255,255,0.8);
+    }
+    .rule-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .btn-start {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      color: white;
+      font-family: 'Unbounded', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 18px 48px;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 12px 40px rgba(255,77,141,0.4);
+      letter-spacing: 0.5px;
+      width: 100%;
+    }
+    .btn-start:hover { transform: translateY(-2px); box-shadow: 0 16px 48px rgba(255,77,141,0.5); }
+    .btn-start:active { transform: translateY(0); }
+
+
+    #screen-game { animation: fadeUp 0.4s ease; }
+
+
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 8px;
+    }
+    .hud-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 50px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 800;
+      flex: 1;
+      justify-content: center;
+    }
+    .hud-pill span:first-child { font-size: 16px; }
+    .hearts { display: flex; gap: 3px; }
+    .heart { font-size: 16px; transition: all 0.3s; }
+    .heart.lost { opacity: 0.2; transform: scale(0.7); }
+
+
+    .timer-bar-wrap {
+      background: rgba(255,255,255,0.1);
+      border-radius: 8px;
+      height: 6px;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+    .timer-bar {
+      height: 100%;
+      border-radius: 8px;
+      background: linear-gradient(90deg, var(--gold), var(--pink));
+      transition: width 1s linear, background 0.5s;
+    }
+    .timer-bar.danger { background: linear-gradient(90deg, #ff4444, #ff6600); }
+
+
+    .progress-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .progress-track {
+      flex: 1;
+      height: 5px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--purple), var(--pink));
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+    .progress-text {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      white-space: nowrap;
+      font-weight: 700;
+    }
+
+  
+    .combo-banner {
+      text-align: center;
+      height: 28px;
+      font-family: 'Unbounded', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 1px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      margin-bottom: 4px;
+    }
+    .combo-banner.show { opacity: 1; }
+
+  
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 28px 24px 24px;
+      backdrop-filter: blur(12px);
+    }
+
+    .q-number {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: rgba(255,255,255,0.35);
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .question-text {
+      font-family: 'Unbounded', sans-serif;
+      font-size: clamp(16px, 4.5vw, 22px);
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 24px;
+      color: #fff;
+    }
+
+    .answers {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .ans-btn {
+      padding: 16px 12px;
+      background: rgba(255,255,255,0.06);
+      border: 1.5px solid rgba(255,255,255,0.12);
+      border-radius: 16px;
+      color: #fff;
+      font-family: 'Nunito', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.3;
+    }
+    .ans-btn:hover:not(:disabled) {
+      background: rgba(255,255,255,0.12);
+      border-color: rgba(255,255,255,0.3);
+      transform: translateY(-2px);
+    }
+    .ans-btn.correct {
+      background: rgba(0,230,118,0.15);
+      border-color: var(--correct);
+      color: var(--correct);
+      animation: popIn 0.3s ease;
+    }
+    .ans-btn.wrong {
+      background: rgba(255,68,68,0.15);
+      border-color: var(--wrong);
+      color: var(--wrong);
+      animation: shake 0.3s ease;
+    }
+    .ans-btn.reveal {
+      background: rgba(0,230,118,0.1);
+      border-color: rgba(0,230,118,0.5);
+      color: rgba(0,230,118,0.8);
+    }
+    .ans-btn:disabled { cursor: not-allowed; }
+
+    @keyframes popIn {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+      100% { transform: scale(1); }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+  
+    .feedback {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 800;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      padding: 6px 14px;
+      transition: all 0.2s;
+    }
+    .feedback.ok { background: rgba(0,230,118,0.12); color: var(--correct); }
+    .feedback.bad { background: rgba(255,68,68,0.12); color: var(--wrong); }
+
+    
+    #screen-result {
+      text-align: center;
+      animation: fadeUp 0.6s ease;
+    }
+
+    .result-fireworks {
+      font-size: 52px;
+      display: block;
+      margin-bottom: 16px;
+      animation: spin 1s ease;
+    }
+    @keyframes spin {
+      0% { transform: rotate(-20deg) scale(0.5); opacity: 0; }
+      60% { transform: rotate(10deg) scale(1.15); }
+      100% { transform: rotate(0deg) scale(1); opacity: 1; }
+    }
+
+    .result-title {
+      font-family: 'Unbounded', sans-serif;
+      font-size: clamp(20px, 5vw, 28px);
+      font-weight: 900;
+      background: linear-gradient(135deg, #fff, #ff9de2, var(--gold));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+
+    .result-sub {
+      font-size: 14px;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .stat-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 16px 8px;
+    }
+    .stat-val {
+      display: block;
+      font-family: 'Unbounded', sans-serif;
+      font-size: 24px;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .stat-lbl {
+      display: block;
+      font-size: 11px;
+      color: rgba(255,255,255,0.45);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+    }
+
+    .result-rank {
+      background: linear-gradient(135deg, rgba(255,77,141,0.15), rgba(139,47,201,0.15));
+      border: 1px solid rgba(255,77,141,0.3);
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      font-size: 15px;
+      color: rgba(255,255,255,0.9);
+      line-height: 1.6;
+    }
+
+    .btn-restart {
+      display: block;
+      width: 100%;
+      background: linear-gradient(135deg, var(--pink), var(--purple));
+      color: white;
+      font-family: 'Unbounded', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 17px 32px;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 10px 36px rgba(255,77,141,0.35);
+      letter-spacing: 0.5px;
+    }
+    .btn-restart:hover { transform: translateY(-2px); box-shadow: 0 16px 44px rgba(255,77,141,0.45); }
+
+    .photo-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s, visibility 0.2s;
+    }
+    .photo-overlay.show { opacity: 1; visibility: visible; }
+    .photo-card {
+      width: min(100%, 400px);
+      border-radius: 24px;
+      overflow: hidden;
+      border: 2px solid rgba(255,255,255,0.15);
+    }
+    .photo-card img {
+      width: 100%;
+      height: auto;
+      display: block;
+      max-height: 60vh;
+      object-fit: cover;
+    }
+    .photo-caption {
+      background: rgba(0,0,0,0.7);
+      padding: 14px 18px;
+      text-align: center;
+      font-weight: 800;
+      font-size: 16px;
+    }
+    .photo-caption.ok { color: var(--correct); }
+    .photo-caption.bad { color: var(--wrong); }
+
+    @media (max-width: 480px) {
+      .answers { grid-template-columns: 1fr; }
+      .card { padding: 22px 18px 20px; }
+      .stats-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<div id="root">
+
+  <div class="screen active" id="screen-welcome">
+    <span class="welcome-emoji">🎂</span>
+    <h1 class="welcome-title">Насколько хорошо ты знаешь Ксюшу?</h1>
+    <p class="welcome-sub">15 вопросов, таймер, жизни и комбо-бонусы.<br>Кто наберёт больше всех?</p>
+
+    <div class="welcome-rules">
+      <div class="rule-item"><span class="rule-icon">⏱️</span><span>15 секунд на каждый вопрос</span></div>
+      <div class="rule-item"><span class="rule-icon">❤️</span><span>3 жизни — не теряй их все</span></div>
+      <div class="rule-item"><span class="rule-icon">🔥</span><span>Отвечай подряд для комбо-бонуса к очкам</span></div>
+      <div class="rule-item"><span class="rule-icon">⭐</span><span>Чем быстрее ответишь — тем больше XP</span></div>
+    </div>
+
+    <button class="btn-start" onclick="startGame()">Начать квиз!</button>
+  </div>
+
+  <div class="screen" id="screen-game">
+    <div class="hud">
+      <div class="hud-pill">
+        <div class="hearts" id="hearts"></div>
+      </div>
+      <div class="hud-pill">
+        <span>⭐</span>
+        <span id="xp-val">0</span>
+        <span style="color:rgba(255,255,255,0.4);font-size:11px">XP</span>
+      </div>
+      <div class="hud-pill">
+        <span>🏆</span>
+        <span id="level-val">1</span>
+      </div>
+    </div>
+
+    <div class="timer-bar-wrap">
+      <div class="timer-bar" id="timer-bar"></div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="progress-text" id="progress-text">1 / 15</div>
+    </div>
+
+    <div class="combo-banner" id="combo-banner">🔥 КОМБО!</div>
+
+    <div class="card">
+      <div class="q-number" id="q-number">Вопрос 1</div>
+      <div class="question-text" id="question-text"></div>
+      <div class="answers" id="answers"></div>
+      <div class="feedback" id="feedback" style="display:none"></div>
+    </div>
+  </div>
+
+
+  <div class="screen" id="screen-result">
+    <span class="result-fireworks" id="result-emoji">🎉</span>
+    <h2 class="result-title" id="result-title">Отличный результат!</h2>
+    <p class="result-sub" id="result-sub"></p>
+
+    <div class="stats-grid">
+      <div class="stat-box">
+        <span class="stat-val" id="st-xp">0</span>
+        <span class="stat-lbl">XP</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-val" id="st-acc">0%</span>
+        <span class="stat-lbl">Точность</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-val" id="st-combo">0x</span>
+        <span class="stat-lbl">Макс комбо</span>
+      </div>
+    </div>
+
+    <div class="result-rank" id="result-rank"></div>
+
+    <button class="btn-restart" onclick="restartGame()">Попробовать ещё раз 🔄</button>
+  </div>
+
+</div>
+
+<!-- PHOTO OVERLAY -->
+<div class="photo-overlay" id="photo-overlay">
+  <div class="photo-card">
+    <img id="photo-img" src="" alt="">
+    <div class="photo-caption" id="photo-caption"></div>
+  </div>
+</div>
+
+<script>
+
+const QUESTIONS = [
+  {
+    q: "Какая у неё любимая еда?",
+    a: ["Суши 🍣", "Пицца 🍕", "Шашлык 🥩", "Бургер 🍔"],
+    c: 2
+  },
+  {
+    q: "Чем она занимается в выходной с утра?",
+    a: ["Спит до обеда 😴", "Идёт на прогулку 🚶", "Смотрит сериалы 📺", "Готовит завтрак 🍳"],
+    c: 0
+  },
+  {
+    q: "Какой жанр фильмов она любит больше всего?",
+    a: ["Романтика 💕", "Комедия 😂", "Триллер 😱", "Фэнтези ✨"],
+    c: 2
+  },
+  {
+    q: "Какое у неё любимое время года?",
+    a: ["Весна 🌸", "Лето ☀️", "Осень 🍂", "Зима ❄️"],
+    c: 2
+  },
+  {
+    q: "Куда она мечтает съездить?",
+    a: ["США 🇺🇸", "Япония 🇯🇵", "Мальдивы 🏝️", "Париж 🇫🇷"],
+    c: 0
+  },
+  {
+    q: "Чего она боится ?",
+    a: ["Оставить телефон дома 😱", "Насекомые 🫨", "Темноты 😓", "Высоты 😰"],
+    c: 1
+  },
+  {
+    q: "Что она выберет на вечер пятницы?",
+    a: ["Тусовка с друзьями 🎉", "Кино дома 🎬", "Ресторан 🍽️", "Долгая прогулка 🌙"],
+    c: 0
+  },
+  {
+    q: "Какой напиток она пьёт по утрам?",
+    a: ["Кофе ☕", "Чай 🍵", "Свежевыжатый сок 🍊", "Вода с лимоном 🍋"],
+    c: 0
+  },
+  {
+    q: "Что её сразу улучшает настроение?",
+    a: ["Любимая музыка 🎵", "Вкусная еда 🍰", "Пополнение на карту 🤑", "Шопинг 🛍️"],
+    c: 2
+  },
+  {
+    q: "Какое её любимое животное?",
+    a: ["Кошка 🐱", "Собака 🐶", "Кролик 🐰", "Птица 🐦"],
+    c: 0
+  },
+  {
+    q: "Чем она занимается для отдыха?",
+    a: ["Читает книги 📚", "Слушает музыку 🎧", "Рисует 🎨", "Играет в IPAD 🎮"],
+    c: 3
+  },
+  {
+    q: "Какой у неё любимый праздник?",
+    a: ["Новый год 🎆", "День рождения 🎂", "Хэллоуин 🎃", "8 марта 🌷"],
+    c: 0
+  },
+  {
+    q: "Что она никогда не забудет взять с собой?",
+    a: ["Телефон 📱", "Наушники 🎧", "Айкос 🚬", "Блокнот 📓"],
+    c: 2
+  },
+  {
+    q: "Как она реагирует на сюрпризы?",
+    a: ["Смеётся от радости 😂", "Краснеет и смущается 🥺", "Плачет от счастья 😭", "Прыгает от восторга 🤸"],
+    c: 2
+  },
+  {
+    q: "Что главное для неё в дружбе?",
+    a: ["Верность 🤝", "Честность 💎", "Поддержка 🫂", "Весёлые моменты 🎊"],
+    c: 2
+  },
+];
+
+
+const PHOTOS = {
+  correct: 'images/good.jpg', 
+  wrong: 'images/bad.jpg'  
+};
+
+const TIME_PER_Q = 15; 
+
+
+
+let state = {};
+let timerInterval = null;
+let timeLeft = TIME_PER_Q;
+
+function resetState() {
+  state = {
+    i: 0, xp: 0, level: 1, lives: 3,
+    combo: 0, maxCombo: 0, correct: 0, locked: false
+  };
+}
+
+function $ (id) { return document.getElementById(id); }
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+function startGame() {
+  resetState();
+  show('screen-game');
+  loadQuestion();
+}
+
+function restartGame() {
+  show('screen-welcome');
+}
+
+function renderHearts() {
+  const h = $('hearts');
+  h.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const s = document.createElement('span');
+    s.className = 'heart' + (i >= state.lives ? ' lost' : '');
+    s.textContent = '❤️';
+    h.appendChild(s);
+  }
+}
+
+function updateHUD() {
+  $('xp-val').textContent = state.xp;
+  $('level-val').textContent = state.level;
+  renderHearts();
+}
+
+function updateProgress() {
+  const pct = (state.i / QUESTIONS.length) * 100;
+  $('progress-fill').style.width = pct + '%';
+  $('progress-text').textContent = (state.i + 1) + ' / ' + QUESTIONS.length;
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  timeLeft = TIME_PER_Q;
+  updateTimerBar();
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimerBar();
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      handleWrong(-1);
+    }
+  }, 1000);
+}
+
+function updateTimerBar() {
+  const pct = (timeLeft / TIME_PER_Q) * 100;
+  const bar = $('timer-bar');
+  bar.style.width = pct + '%';
+  bar.classList.toggle('danger', timeLeft <= 5);
+}
+
+function loadQuestion() {
+  state.locked = false;
+  const cur = QUESTIONS[state.i];
+
+  $('q-number').textContent = 'Вопрос ' + (state.i + 1);
+  $('question-text').textContent = cur.q;
+
+  const fb = $('feedback');
+  fb.style.display = 'none';
+  fb.className = 'feedback';
+
+  updateCombo();
+  updateProgress();
+  updateHUD();
+
+  const ans = $('answers');
+  ans.innerHTML = '';
+  cur.a.forEach((txt, idx) => {
+    const btn = document.createElement('button');
+    btn.className = 'ans-btn';
+    btn.textContent = txt;
+    btn.onclick = () => select(idx);
+    ans.appendChild(btn);
+  });
+
+  startTimer();
+}
+
+function lockButtons() {
+  document.querySelectorAll('.ans-btn').forEach(b => b.disabled = true);
+  state.locked = true;
+}
+
+function select(idx) {
+  if (state.locked) return;
+  clearInterval(timerInterval);
+  lockButtons();
+  const cur = QUESTIONS[state.i];
+  if (idx === cur.c) handleCorrect(idx);
+  else handleWrong(idx);
+}
+
+function handleCorrect(idx) {
+  const btns = document.querySelectorAll('.ans-btn');
+  if (btns[idx]) btns[idx].classList.add('correct');
+
+  state.combo++;
+  state.maxCombo = Math.max(state.maxCombo, state.combo);
+  const speedBonus = Math.max(1, Math.floor(timeLeft / 3));
+  const comboMult = state.combo > 1 ? state.combo : 1;
+  const earned = (10 + speedBonus) * comboMult;
+  state.xp += earned;
+  state.correct++;
+
+  if (state.xp >= state.level * 60) state.level++;
+
+  const msg = state.combo > 1
+    ? `🔥 Комбо x${state.combo}! +${earned} XP`
+    : `✅ Правильно! +${earned} XP`;
+  showFeedback(true, msg);
+  updateHUD();
+  updateCombo();
+
+  if (PHOTOS.correct) {
+    showPhoto('correct');
+    setTimeout(() => { hidePhoto(); next(); }, 1500);
+  } else {
+    setTimeout(next, 900);
+  }
+}
+
+function handleWrong(idx) {
+  clearInterval(timerInterval);
+  const btns = document.querySelectorAll('.ans-btn');
+  const cur = QUESTIONS[state.i];
+
+  if (idx >= 0 && btns[idx]) btns[idx].classList.add('wrong');
+  if (btns[cur.c]) btns[cur.c].classList.add('reveal');
+
+  state.lives--;
+  state.combo = 0;
+
+  const msg = idx < 0 ? '⏰ Время вышло!' : '❌ Не угадал...';
+  showFeedback(false, msg);
+  updateHUD();
+  updateCombo();
+
+  if (PHOTOS.wrong) {
+    showPhoto('wrong');
+    setTimeout(() => {
+      hidePhoto();
+      if (state.lives <= 0) showResult();
+      else next();
+    }, 1500);
+  } else {
+    setTimeout(() => {
+      if (state.lives <= 0) showResult();
+      else next();
+    }, 1000);
+  }
+}
+
+function showFeedback(ok, text) {
+  const fb = $('feedback');
+  fb.textContent = text;
+  fb.className = 'feedback ' + (ok ? 'ok' : 'bad');
+  fb.style.display = 'flex';
+}
+
+function updateCombo() {
+  const el = $('combo-banner');
+  if (state.combo >= 2) {
+    el.textContent = `🔥 КОМБО x${state.combo}!`;
+    el.classList.add('show');
+  } else {
+    el.classList.remove('show');
+  }
+}
+
+function next() {
+  state.i++;
+  if (state.i >= QUESTIONS.length) showResult();
+  else loadQuestion();
+}
+
+function showResult() {
+  clearInterval(timerInterval);
+  show('screen-result');
+
+  const total = QUESTIONS.length;
+  const acc = Math.round((state.correct / total) * 100);
+  const won = state.lives > 0 && state.i >= total;
+
+  $('result-emoji').textContent = won ? '🎉' : '💔';
+  $('st-xp').textContent = state.xp;
+  $('st-acc').textContent = acc + '%';
+  $('st-combo').textContent = state.maxCombo + 'x';
+
+  let title, sub, rank;
+  if (acc >= 90) {
+    title = 'Ты знаешь её лучше всех!';
+    sub = `${state.correct} из ${total} правильных ответов. Настоящий лучший друг!`;
+    rank = '🏆 Эксперт по имениннице — ты точно особенный человек в её жизни!';
+  } else if (acc >= 70) {
+    title = 'Очень хорошо знаешь её!';
+    sub = `${state.correct} из ${total} правильных ответов. Почти идеально!`;
+    rank = '⭐ Настоящий друг — она точно рада что ты здесь!';
+  } else if (acc >= 50) {
+    title = 'Неплохой результат!';
+    sub = `${state.correct} из ${total} правильных ответов. Есть куда расти!`;
+    rank = '😊 Хороший знакомый — но можно узнать её ещё лучше!';
+  } else {
+    title = 'Есть повод познакомиться ближе!';
+    sub = `${state.correct} из ${total} правильных ответов.`;
+    rank = '🤗 Главное что ты здесь и разделяешь этот праздник с ней!';
+  }
+
+  $('result-title').textContent = title;
+  $('result-sub').textContent = sub;
+  $('result-rank').textContent = rank;
+}
+
+function showPhoto(type) {
+  const overlay = $('photo-overlay');
+  $('photo-img').src = PHOTOS[type];
+  const cap = $('photo-caption');
+  cap.className = 'photo-caption ' + (type === 'correct' ? 'ok' : 'bad');
+  cap.textContent = type === 'correct' ? '✅ Правильно!' : '❌ Не угадал...';
+  overlay.classList.add('show');
+}
+
+function hidePhoto() {
+  $('photo-overlay').classList.remove('show');
+}
+
+function createParticles() {
+  const container = $('particles');
+  const colors = ['#ff4d8d','#8b2fc9','#ffcc00','#ff9de2','#c44dff'];
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 6 + 3;
+    p.style.cssText = `
+      width: ${size}px; height: ${size}px;
+      left: ${Math.random() * 100}%;
+      background: ${colors[Math.floor(Math.random() * colors.length)]};
+      animation-duration: ${Math.random() * 15 + 10}s;
+      animation-delay: ${Math.random() * 10}s;
+    `;
+    container.appendChild(p);
+  }
+}
+
+createParticles();
+</script>
+</body>
+</html>
