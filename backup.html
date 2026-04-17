@@ -177,6 +177,9 @@
       justify-content: center;
     }
     .hud-pill span:first-child { font-size: 16px; }
+    .hearts { display: flex; gap: 3px; }
+    .heart { font-size: 16px; transition: all 0.3s; }
+    .heart.lost { opacity: 0.2; transform: scale(0.7); }
 
 
     .timer-bar-wrap {
@@ -487,13 +490,13 @@
   <div class="screen active" id="screen-welcome">
     <span class="welcome-emoji">🎂</span>
     <h1 class="welcome-title">Насколько хорошо ты знаешь Ксюшу?</h1>
-    <p class="welcome-sub">15 вопросов, таймер и комбо-бонусы.<br>Кто наберёт больше всех?</p>
+    <p class="welcome-sub">15 вопросов, таймер, жизни и комбо-бонусы.<br>Кто наберёт больше всех?</p>
 
     <div class="welcome-rules">
       <div class="rule-item"><span class="rule-icon">⏱️</span><span>15 секунд на каждый вопрос</span></div>
+      <div class="rule-item"><span class="rule-icon">❤️</span><span>3 жизни — не теряй их все</span></div>
       <div class="rule-item"><span class="rule-icon">🔥</span><span>Отвечай подряд для комбо-бонуса к очкам</span></div>
       <div class="rule-item"><span class="rule-icon">⭐</span><span>Чем быстрее ответишь — тем больше XP</span></div>
-      <div class="rule-item"><span class="rule-icon">🎯</span><span>Все 15 вопросов — до самого конца!</span></div>
     </div>
 
     <button class="btn-start" onclick="startGame()">Начать квиз!</button>
@@ -502,6 +505,9 @@
   <div class="screen" id="screen-game">
     <div class="hud">
       <div class="hud-pill">
+        <div class="hearts" id="hearts"></div>
+      </div>
+      <div class="hud-pill">
         <span>⭐</span>
         <span id="xp-val">0</span>
         <span style="color:rgba(255,255,255,0.4);font-size:11px">XP</span>
@@ -509,12 +515,6 @@
       <div class="hud-pill">
         <span>🏆</span>
         <span id="level-val">1</span>
-        <span style="color:rgba(255,255,255,0.4);font-size:11px">LVL</span>
-      </div>
-      <div class="hud-pill">
-        <span>🔥</span>
-        <span id="combo-val">0</span>
-        <span style="color:rgba(255,255,255,0.4);font-size:11px">КОМБО</span>
       </div>
     </div>
 
@@ -650,8 +650,8 @@ const QUESTIONS = [
   },
   {
     q: "Если она выиграет миллион долларов, на что уйдет первая крупная сумма?",
-    a: ["Купит Zeekr 🚘", "Купит всем друзьям по новому iPhone 👍", "Купит Арсану MacBook Pro 16 M5 Pro ☺️", "Отдаст на благотворительность 😇"],
-    c: 0
+    a: ["Кпит Zeekr 🚘", "Купит всем друзьям по новому iPhone, просто потому что может. 👍", "Купит Арсану MacBook Pro 16 M5 Pro ☺️", "Отдаст на благотворительность 😇"],
+    c: 2
   },
 ];
 
@@ -671,7 +671,7 @@ let timeLeft = TIME_PER_Q;
 
 function resetState() {
   state = {
-    i: 0, xp: 0, level: 1,
+    i: 0, xp: 0, level: 1, lives: 3,
     combo: 0, maxCombo: 0, correct: 0, locked: false
   };
 }
@@ -693,10 +693,21 @@ function restartGame() {
   show('screen-welcome');
 }
 
+function renderHearts() {
+  const h = $('hearts');
+  h.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const s = document.createElement('span');
+    s.className = 'heart' + (i >= state.lives ? ' lost' : '');
+    s.textContent = '❤️';
+    h.appendChild(s);
+  }
+}
+
 function updateHUD() {
   $('xp-val').textContent = state.xp;
   $('level-val').textContent = state.level;
-  $('combo-val').textContent = state.combo;
+  renderHearts();
 }
 
 function updateProgress() {
@@ -805,6 +816,7 @@ function handleWrong(idx) {
   if (idx >= 0 && btns[idx]) btns[idx].classList.add('wrong');
   if (btns[cur.c]) btns[cur.c].classList.add('reveal');
 
+  state.lives--;
   state.combo = 0;
 
   const msg = idx < 0 ? '⏰ Время вышло!' : '❌ Не угадал...';
@@ -816,11 +828,13 @@ function handleWrong(idx) {
     showPhoto('wrong');
     setTimeout(() => {
       hidePhoto();
-      next(); 
+      if (state.lives <= 0) showResult();
+      else next();
     }, 1500);
   } else {
     setTimeout(() => {
-      next(); 
+      if (state.lives <= 0) showResult();
+      else next();
     }, 1000);
   }
 }
@@ -854,8 +868,9 @@ function showResult() {
 
   const total = QUESTIONS.length;
   const acc = Math.round((state.correct / total) * 100);
+  const won = state.lives > 0 && state.i >= total;
 
-  $('result-emoji').textContent = acc >= 70 ? '🎉' : '😊';
+  $('result-emoji').textContent = won ? '🎉' : '💔';
   $('st-xp').textContent = state.xp;
   $('st-acc').textContent = acc + '%';
   $('st-combo').textContent = state.maxCombo + 'x';
